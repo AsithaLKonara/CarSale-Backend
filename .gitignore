@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build Outputs
+dist/
+build/
+*.tsbuildinfo
+
+# OS / Miscellaneous
+.DS_Store
+Thumbs.db
+*.log
+*.pem
+
+# Environment Secrets
+.env
+.env.local
+.env.production
+.env.development
+
+# Database Logs and IDE
+.vscode/
+.idea/
+*.db
+*.db-journal

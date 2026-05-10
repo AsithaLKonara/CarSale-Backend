@@ -1,0 +1,217 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  editor
+  viewer
+}
+
+model Organization {
+  id              String           @id @default(cuid())
+  name            String
+  slug            String           @unique
+  logo            String?
+  createdAt       DateTime         @default(now())
+
+  users           AdminUser[]
+  cars            Car[]
+  bookings        Booking[]
+  notifications   Notification[]
+  analyticsEvents AnalyticsEvent[]
+  leads           Lead[]
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  permissions Json     // List of standard capacities, e.g. ["cars:create", "bookings:view"]
+  createdAt   DateTime @default(now())
+
+  users       AdminUser[]
+}
+
+model Car {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  brand       String
+  description String
+
+  horsepower  Int
+  torque      Int
+  topSpeed    Int
+  zeroTo100   Float
+
+  price       String?  // Stored as formatted string (e.g. "$3,000,000") or numeric
+  isFeatured  Boolean  @default(false)
+  category    String   // track, luxury, hypercar
+
+  year         Int       @default(2025)
+  mileage      Int       @default(0)
+  fuelType     String    @default("petrol")
+  transmission String    @default("automatic")
+  vin          String?
+  condition    String    @default("new")
+  status       String    @default("available") // available, reserved, sold, draft, hidden
+  featured     Boolean   @default(false)
+  soldAt       DateTime?
+  publishedAt  DateTime?
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  images      CarImage[]
+  specs       CarSpec[]
+
+  @@index([category])
+  @@index([isFeatured])
+  @@index([organizationId])
+  @@index([status])
+  @@index([year])
+  @@index([mileage])
+}
+
+model CarImage {
+  id      String @id @default(cuid())
+  url     String
+  type    String // hero, gallery, thumbnail
+
+  carId   String
+  car     Car @relation(fields: [carId], references: [id], onDelete: Cascade)
+
+  @@index([carId])
+}
+
+model CarSpec {
+  id      String @id @default(cuid())
+  label   String
+  value   String
+
+  carId   String
+  car     Car @relation(fields: [carId], references: [id], onDelete: Cascade)
+
+  @@index([carId])
+}
+
+model Booking {
+  id            String   @id @default(cuid())
+  name          String
+  email         String
+  phone         String?
+  preferredDate DateTime
+  carInterest   String?
+  status        String   @default("pending") // pending, confirmed, completed
+  notes         String?  @db.Text
+
+  assignedToId  String?
+  followUpDate  DateTime?
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([organizationId])
+}
+
+model Lead {
+  id            String   @id @default(cuid())
+  name          String
+  email         String
+  phone         String?
+  message       String?
+  source        String?
+  status        String   @default("new") // new, contacted, interested, negotiating, closed, lost
+  priority      String   @default("medium")
+  followUpDate  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([organizationId])
+}
+
+model AdminUser {
+  id             String        @id @default(cuid())
+  email          String        @unique
+  password       String
+  role           UserRole      @default(viewer)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  roleId         String?
+  customRole     Role?         @relation(fields: [roleId], references: [id])
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([email])
+  @@index([organizationId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // e.g. login_attempt, car_create, car_edit, booking_update, media_upload, delete_record
+  entity      String   // e.g. AdminUser, Car, Booking, Media
+  entityId    String?
+  userId      String?  // The active admin who made the action
+  metadata    Json?    // Optional diagnostic fields (IP, browser agent)
+  createdAt   DateTime @default(now())
+
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  eventType   String   // e.g. page_view, car_detail, booking_submit, auth_login
+  path        String?  // e.g. /cars/jesko
+  carId       String?  // Relational reference if viewing a specific car
+  metadata    Json?    // Location, viewport, search query
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([organizationId])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  title       String
+  message     String
+  type        String   // e.g. booking, inventory, alert
+  isRead      Boolean  @default(false)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([organizationId])
+}
