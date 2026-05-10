@@ -1,15 +1,15 @@
 version: '3.8'
 
 services:
-  # 1. Relational Database Server
+  # 1. Relational Database Server (PostgreSQL)
   postgres:
     image: postgres:15-alpine
     container_name: ultradrive-postgres
     restart: always
     environment:
-      POSTGRES_USER: asithalakmal
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: ultradrive
-      POSTGRES_HOST_AUTH_METHOD: trust # Local dev-friendly trust auth
     ports:
       - '5432:5432'
     volumes:
@@ -28,7 +28,7 @@ services:
   # 3. Express Application API
   backend:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     container_name: ultradrive-backend
     restart: always
@@ -36,20 +36,21 @@ services:
       - postgres
       - redis
     environment:
-      PORT: 5000
-      DATABASE_URL: postgresql://asithalakmal@postgres:5432/ultradrive?schema=public
+      PORT: 5001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ultradrive?schema=public
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: super_secure_ultradrive_jwt_core_access_secret_phrase
+      JWT_SECRET: ultradrive_jwt_secret
+      JWT_REFRESH_SECRET: ultradrive_refresh_secret
       NODE_ENV: production
     ports:
-      - '5000:5000'
+      - '5001:5001'
     volumes:
-      - backend-uploads:/Users/asithalakmal/Documents/web/CarSale/public/uploads
+      - backend-uploads:/app/public/uploads
 
   # 4. Next.js Showroom Client
   frontend:
     build:
-      context: ./Frontend
+      context: ../CarSale
       dockerfile: Dockerfile
     container_name: ultradrive-frontend
     restart: always

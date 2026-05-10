@@ -9,7 +9,9 @@
     "start": "node dist/server.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:reset:test": "prisma migrate reset --force && ts-node prisma/seed-production.ts",
+    "db:seed:test": "ts-node prisma/seed-production.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.11.0",
@@ -26,6 +28,7 @@
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^8.0.7",
     "socket.io": "^4.8.3",
     "uuid": "^14.0.0",

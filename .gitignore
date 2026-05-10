@@ -14,13 +14,10 @@ Thumbs.db
 *.pem
 
 # Environment Secrets
-.env
-.env.local
-.env.production
-.env.development
 
 # Database Logs and IDE
 .vscode/
 .idea/
 *.db
 *.db-journal
+config.bat
